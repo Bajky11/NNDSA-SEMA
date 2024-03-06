@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NNDSA_SEMA.src;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.CompilerServices;
@@ -106,10 +107,11 @@ public class Graph
 
 class Program
 {
-    static int[] verticies = { 23, 12, 14, 30, 17, 29, 18, 27, 21, 22, 15, 16, 19, 28, 24, 13 };
     static int[] startVertices = { 23, 21, 22, 24, 30, 29 };
     static int[] endVertices = { 30, 29, 27, 28 };
-    static int[,] data = new int[,]{
+
+    static int[] verticies = { 23, 12, 14, 30, 17, 29, 18, 27, 21, 22, 15, 16, 19, 28, 24, 13 };
+    static int[,] edges = new int[,]{
     { 23, 12 },
     { 12, 14 },
     { 14, 30 },
@@ -130,6 +132,7 @@ class Program
 
     static void Main(string[] args)
     {
+        /*
         Graph graph = new Graph();
 
         foreach (int number in verticies)
@@ -156,6 +159,79 @@ class Program
         {
             Console.WriteLine(string.Join(" -> ", path));
         }
+        */
+
+        // Data: Vertices
+        int[] vertices = { 23, 12, 14, 30, 17, 29, 18, 27, 21, 22, 15, 16, 19, 28, 24, 13 };
+
+        // Data: Edges
+        int[,] edges = new int[,]{
+                { 23, 12 },
+                { 12, 14 },
+                { 14, 30 },
+                { 30, 17 },
+                { 17, 29 },
+                { 29, 18 },
+                { 18, 27 },
+                { 18, 19 },
+                { 21, 14 },
+                { 22, 15 },
+                { 15, 16 },
+                { 16, 17 },
+                { 16, 19 },
+                { 19, 28 },
+                { 24, 13 },
+                { 13, 15 }
+            };
+
+        // Create a graph with integer vertices and string edges
+        var graph = new GenerericGraph<int, string>();
+
+
+
+
+
+
+        // Fill the graph with vertices
+        foreach (var vertex in vertices)
+        {
+            graph.AddVertex(vertex, $"V{vertex}");
+        }
+
+        // Fill the graph with edges and associated data
+        for (int i = 0; i < edges.GetLength(0); i++)
+        {
+            int startVertex = edges[i, 0];
+            int endVertex = edges[i, 1];
+            string edgeData = $"Edge from {startVertex} to {endVertex}";
+            graph.AddEdge(startVertex, endVertex, edgeData);
+        }
+
+        // Print the graph to verify its structure
+        Console.WriteLine("Graph structure:");
+        graph.PrintGraph();
+        Console.WriteLine();
+
+
+
+
+        var allPaths = graph.FindAllPaths(23, 27);
+
+        Console.WriteLine("All paths found:");
+        foreach (var path in allPaths)
+        {
+            Console.WriteLine(string.Join(" -> ", path));
+        }
+
+        allPaths = graph.FindAllPaths(22, 28);
+
+        Console.WriteLine("All paths found:");
+        foreach (var path in allPaths)
+        {
+            Console.WriteLine(string.Join(" -> ", path));
+        }
+
+
 
 
 
