@@ -11,7 +11,7 @@ namespace NNDSA_SEMA.src
         void AddEdge(K keyOfStartVertex, K keyOfEndVertex, E edgeData);
         void RemoveEdge(K keyOfStartVertex, K keyOfEndVertex);
         void PrintGraph();
-        List<List<K>> FindAllPaths(K startVertexKey, K endVertexKey);
+        List<List<K>> FindAllPathsBetweenTwoVertexes(K startVertexKey, K endVertexKey);
     }
 
     internal class GenerericGraph<K, E> : IGenericGraph<K, E>
@@ -94,7 +94,7 @@ namespace NNDSA_SEMA.src
             }
         }
 
-        public List<List<K>> FindAllPaths(K startVertexKey, K endVertexKey)
+        public List<List<K>> FindAllPathsBetweenTwoVertexes(K startVertexKey, K endVertexKey)
         {
             List<List<K>> allPaths = new List<List<K>>();
             HashSet<K> visited = new HashSet<K>();
@@ -102,6 +102,27 @@ namespace NNDSA_SEMA.src
             FindAllPathsRecursive(startVertexKey, endVertexKey, visited, currentPath, allPaths);
             return allPaths;
         }
+
+        public List<List<K>> FindAllPathsBetweenStartAndEndVertexes(K[] startVertexes, K[] endVertexes)
+        {
+            List<List<K>> allPaths = new List<List<K>>();
+            foreach (var startVertex in startVertexes)
+            {
+                foreach (var endVertex in endVertexes)
+                {
+                    var allPathsBetweenTwoVertexes = FindAllPathsBetweenTwoVertexes(startVertex, endVertex);
+                    foreach (var path in allPathsBetweenTwoVertexes)
+                    {
+                        if (path.Count > 1)
+                        {
+                            allPaths.Add(path);
+                        }
+                    }
+                }
+            }
+            return allPaths;
+        }
+
 
         private void FindAllPathsRecursive(K currentVertexKey, K endVertexKey, HashSet<K> visited, List<K> currentPath, List<List<K>> allPaths)
         {
