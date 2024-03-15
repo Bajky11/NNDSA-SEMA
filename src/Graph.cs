@@ -14,93 +14,65 @@ namespace NNDSA_SEMA.src
         List<List<K>> FindAllPathsBetweenTwoVertexes(K startVertexKey, K endVertexKey);
     }
 
-    internal class GenerericGraph<K, E> : IGenericGraph<K, E>
+    public class GenericGraph<K, E> : IGenericGraph<K, E>
     {
-        private Dictionary<K, Vertex<K, E>> vertices;
-        private Dictionary<Tuple<K, K>, E> edges;
-
-        public GenerericGraph()
-        {
-            vertices = new Dictionary<K, Vertex<K, E>>();
-            edges = new Dictionary<Tuple<K, K>, E>();
-        }
+        private Dictionary<K, Vertex<K, E>> adjencyList = new Dictionary<K, Vertex<K, E>>();
 
         public void AddVertex(K key, E data)
         {
-            if (vertices.ContainsKey(key))
-            {
+            if (adjencyList.ContainsKey(key))
                 throw new InvalidOperationException("Vertex already exists.");
-            }
-            vertices[key] = new Vertex<K, E>(key, data);
-        }
-
-        public void AddEdge(K keyOfStartVertex, K keyOfEndVertex, E edgeData)
-        {
-            if (!vertices.ContainsKey(keyOfStartVertex) || !vertices.ContainsKey(keyOfEndVertex))
-            {
-                throw new InvalidOperationException("Start or end vertex does not exist.");
-            }
-
-            vertices[keyOfStartVertex].AddNeighbor(vertices[keyOfEndVertex]);
-            edges[new Tuple<K, K>(keyOfStartVertex, keyOfEndVertex)] = edgeData;
-        }
-
-        public void RemoveEdge(K keyOfStartVertex, K keyOfEndVertex)
-        {
-            if (!vertices.ContainsKey(keyOfStartVertex) || !vertices.ContainsKey(keyOfEndVertex))
-            {
-                throw new InvalidOperationException("Start or end vertex does not exist.");
-            }
-
-            vertices[keyOfStartVertex].RemoveNeighbor(vertices[keyOfEndVertex]);
-            edges.Remove(new Tuple<K, K>(keyOfStartVertex, keyOfEndVertex));
+            adjencyList[key] = new Vertex<K, E>(key, data);
         }
 
         public void RemoveVertex(K key)
         {
-            if (!vertices.ContainsKey(key))
-            {
+            if (!adjencyList.ContainsKey(key))
                 throw new InvalidOperationException("Vertex does not exist.");
-            }
 
-            var vertexToRemove = vertices[key];
-            vertices.Remove(key);
+            var vertexToRemove = adjencyList[key];
+            adjencyList.Remove(key);
 
-            foreach (var vertex in vertices.Values)
+            // Remove this vertex from the neighbors of other vertices and remove the corresponding edges
+            foreach (var vertex in adjencyList.Values)
             {
-                vertex.RemoveNeighbor(vertexToRemove);
+                if (vertex.Neighbors.Contains(vertexToRemove))
+                {
+                    vertex.RemoveEdge(vertexToRemove);
+                }
             }
+        }
 
-            // Remove edges connected to the removed vertex
-            var edgesToRemove = edges.Keys.Where(t => t.Item1.Equals(key) || t.Item2.Equals(key)).ToList();
-            foreach (var edgeToRemove in edgesToRemove)
-            {
-                edges.Remove(edgeToRemove);
-            }
+        public void AddEdge(K startKey, K endKey, E data)
+        {
+            if (!adjencyList.ContainsKey(startKey) || !adjencyList.ContainsKey(endKey))
+                throw new InvalidOperationException("One or both vertices do not exist.");
+
+            var startVertex = adjencyList[startKey];
+            var endVertex = adjencyList[endKey];
+            startVertex.AddEdge(endVertex, data);
+        }
+
+        public void RemoveEdge(K startKey, K endKey)
+        {
+            if (!adjencyList.ContainsKey(startKey) || !adjencyList.ContainsKey(endKey))
+                throw new InvalidOperationException("One or both vertices do not exist.");
+
+            adjencyList[startKey].RemoveEdge(adjencyList[endKey]);
         }
 
         public void PrintGraph()
         {
             Console.WriteLine();
-            foreach (var vertex in vertices.Values)
+            foreach (var vertex in adjencyList.Values)
             {
                 Console.Write($"Vertex {vertex.Key} ({vertex.Data}): ");
-                foreach (var neighbor in vertex.Neighbors)
+                foreach (var edge in vertex.Edges)
                 {
-                    var edgeData = edges[new Tuple<K, K>(vertex.Key, neighbor.Key)];
-                    Console.Write($"{neighbor.Key} ({edgeData}) ");
+                    Console.Write($"{edge.EndVertex.Key} ({edge.Data}) ");
                 }
                 Console.WriteLine();
             }
-        }
-
-        public List<List<K>> FindAllPathsBetweenTwoVertexes(K startVertexKey, K endVertexKey)
-        {
-            List<List<K>> allPaths = new List<List<K>>();
-            HashSet<K> visited = new HashSet<K>();
-            List<K> currentPath = new List<K>();
-            FindAllPathsRecursive(startVertexKey, endVertexKey, visited, currentPath, allPaths);
-            return allPaths;
         }
 
         public List<List<K>> FindAllPathsBetweenStartAndEndVertexes(K[] startVertexes, K[] endVertexes)
@@ -124,86 +96,80 @@ namespace NNDSA_SEMA.src
         }
 
 
-        private void FindAllPathsRecursive(K currentVertexKey, K endVertexKey, HashSet<K> visited, List<K> currentPath, List<List<K>> allPaths)
+        public List<List<K>> FindAllPathsBetweenTwoVertexes(K startVertexKey, K endVertexKey)
         {
-            visited.Add(currentVertexKey);
-            currentPath.Add(currentVertexKey);
+            List<List<K>> allPaths = new List<List<K>>();
+            HashSet<K> visited = new HashSet<K>();
+            List<K> currentPath = new List<K>();
+            FindAllPathsRecursive(adjencyList[startVertexKey], endVertexKey, visited, currentPath, allPaths);
+            return allPaths;
+        }
 
-            if (currentVertexKey.Equals(endVertexKey))
+        private void FindAllPathsRecursive(Vertex<K, E> currentVertex, K endVertexKey, HashSet<K> visited, List<K> currentPath, List<List<K>> allPaths)
+        {
+            visited.Add(currentVertex.Key);
+            currentPath.Add(currentVertex.Key);
+
+            if (currentVertex.Key.Equals(endVertexKey))
             {
                 allPaths.Add(new List<K>(currentPath));
             }
             else
             {
-                foreach (var neighbor in vertices[currentVertexKey].Neighbors)
+                foreach (var neighbor in currentVertex.Neighbors)
                 {
                     if (!visited.Contains(neighbor.Key))
                     {
-                        FindAllPathsRecursive(neighbor.Key, endVertexKey, visited, currentPath, allPaths);
+                        FindAllPathsRecursive(neighbor, endVertexKey, visited, currentPath, allPaths);
                     }
                 }
             }
 
-            visited.Remove(currentVertexKey);
-            currentPath.Remove(currentVertexKey);
-        }
-    }
-
-    public interface IVertex<K, E>
-    {
-        K Key { get; }
-        E Data { get; }
-        List<Vertex<K, E>> Neighbors { get; }
-
-        void AddNeighbor(Vertex<K, E> neighbor);
-        void RemoveNeighbor(Vertex<K, E> neighbor);
-    }
-
-    public class Vertex<K, E> : IVertex<K, E>
-    {
-        public K Key { get; }
-        public E Data { get; }
-        public List<Vertex<K, E>> Neighbors { get; }
-
-        public Vertex(K key, E data)
-        {
-            Key = key;
-            Data = data;
-            Neighbors = new List<Vertex<K, E>>();
+            visited.Remove(currentVertex.Key);
+            currentPath.RemoveAt(currentPath.Count - 1);
         }
 
-        public void AddNeighbor(Vertex<K, E> neighbor)
+        public class Vertex<K, E>
         {
-            if (!Neighbors.Contains(neighbor))
+            public K Key { get; }
+            public E Data { get; }
+            public List<Edge<K, E>> Edges { get; } = new List<Edge<K, E>>();
+            public List<Vertex<K, E>> Neighbors { get; } = new List<Vertex<K, E>>();
+
+            public Vertex(K key, E data)
             {
-                Neighbors.Add(neighbor);
+                Key = key;
+                Data = data;
+            }
+
+            public void AddEdge(Vertex<K, E> toVertex, E edgeData)
+            {
+                Edges.Add(new Edge<K, E>(this, toVertex, edgeData));
+                if (!Neighbors.Contains(toVertex))
+                {
+                    Neighbors.Add(toVertex);
+                }
+            }
+
+            public void RemoveEdge(Vertex<K, E> toVertex)
+            {
+                Edges.RemoveAll(edge => edge.EndVertex.Equals(toVertex));
+                Neighbors.Remove(toVertex);
             }
         }
 
-        public void RemoveNeighbor(Vertex<K, E> neighbor)
+        public class Edge<K, E>
         {
-            Neighbors.Remove(neighbor);
-        }
-    }
+            public Vertex<K, E> StartVertex { get; }
+            public Vertex<K, E> EndVertex { get; }
+            public E Data { get; }
 
-    public interface IEdge<K, E>
-    {
-        Vertex<K, E> StartVertex { get; }
-        Vertex<K, E> EndVertex { get; }
-        E Data { get; }
-    }
-
-    internal class Edge<K, E> : IEdge<K, E>
-    {
-        public Vertex<K, E> StartVertex { get; }
-        public Vertex<K, E> EndVertex { get; }
-        public E Data { get; }
-
-        public Edge(Vertex<K, E> startVertex, Vertex<K, E> endVertex, E data)
-        {
-            StartVertex = startVertex;
-            EndVertex = endVertex;
-            Data = data;
+            public Edge(Vertex<K, E> startVertex, Vertex<K, E> endVertex, E data)
+            {
+                StartVertex = startVertex;
+                EndVertex = endVertex;
+                Data = data;
+            }
         }
     }
 }

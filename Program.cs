@@ -173,7 +173,7 @@ class Program
 
 
         // Create a graph with integer vertices and string edges
-        GenerericGraph<int, string> graph = new GenerericGraph<int, string>();
+        GenericGraph<int, string> graph = new GenericGraph<int, string>();
 
         // Fill the graph with vertices
         foreach (var vertex in vertices)
@@ -192,12 +192,13 @@ class Program
 
         graph.PrintGraph();
 
-
+        /*
         Console.WriteLine("All paths found:");
         var allPaths = graph.FindAllPathsBetweenStartAndEndVertexes(startVertices, endVertices);
-        printAllPaths(allPaths);
-    }
-    static void printAllPaths(List<List<int>> allPaths)
+        PrintAllPaths(allPaths);
+        */
+        }
+    static void PrintAllPaths(List<List<int>> allPaths)
     {
         foreach (var path in allPaths)
         {
@@ -205,6 +206,6 @@ class Program
             {
                 Console.WriteLine(string.Join(" -> ", path));
             }
-    }
+        }
     }
 }
